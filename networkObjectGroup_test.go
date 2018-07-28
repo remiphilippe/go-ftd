@@ -37,7 +37,7 @@ func TestCreateNetworkObjectGroup(t *testing.T) {
 	n.SubType = "HOST"
 	n.Value = "1.1.1.1"
 
-	err = ftd.CreateNetworkObject(n)
+	err = ftd.CreateNetworkObject(n, true)
 	if err != nil {
 		glog.Errorf("error: %s\n", err)
 		return

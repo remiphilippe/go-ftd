@@ -19,7 +19,7 @@ type FTDError struct {
 	Message  []FTDMessage `json:"messages"`
 }
 
-func (fe *FTDError) Error() string {
+func (fe FTDError) Error() string {
 	return fmt.Sprintf("%s: %s with messages %+v", fe.Severity, fe.Key, fe.Message)
 }
 

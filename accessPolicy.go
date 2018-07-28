@@ -115,7 +115,7 @@ func (a *AccessPolicy) Reference() *ReferenceObject {
 func (f *FTD) GetAccessPolicies() ([]*AccessPolicy, error) {
 	var err error
 
-	data, err := f.Get("policy/accesspolicies")
+	data, err := f.Get("policy/accesspolicies", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func (f *FTD) GetAccessRules(policy string) ([]*AccessRule, error) {
 	var err error
 
 	endpoint := fmt.Sprintf("policy/accesspolicies/%s/accessrules", policy)
-	data, err := f.Get(endpoint)
+	data, err := f.Get(endpoint, nil)
 	if err != nil {
 		return nil, err
 	}

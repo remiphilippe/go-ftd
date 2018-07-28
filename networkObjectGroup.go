@@ -32,7 +32,7 @@ func (g *NetworkObjectGroup) Reference() *ReferenceObject {
 func (f *FTD) GetNetworkObjectGroups() ([]*NetworkObjectGroup, error) {
 	var err error
 
-	data, err := f.Get("object/networkgroups")
+	data, err := f.Get("object/networkgroups", nil)
 	if err != nil {
 		return nil, err
 	}

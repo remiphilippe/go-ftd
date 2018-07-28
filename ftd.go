@@ -310,7 +310,7 @@ func (f *FTD) Put(endpoint string, ftdReq interface{}) (bodyText []byte, err err
 }
 
 // Get GET to ASA API
-func (f *FTD) Get(endpoint string) (bodyText []byte, err error) {
+func (f *FTD) Get(endpoint string, uriQuery map[string]string) (bodyText []byte, err error) {
 	uri := url.URL{
 		Host:   f.Hostname,
 		Scheme: "https",
@@ -323,6 +323,12 @@ func (f *FTD) Get(endpoint string) (bodyText []byte, err error) {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+
+	q := req.URL.Query()
+	for k, v := range uriQuery {
+		q.Add(k, v)
+	}
+	req.URL.RawQuery = q.Encode()
 
 	if f.accessToken == "" {
 		return nil, fmt.Errorf("accessToken is not set, did you initialize correctly?")

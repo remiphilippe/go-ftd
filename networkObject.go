@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/golang/glog"
 )
 
@@ -33,7 +34,7 @@ func (n *NetworkObject) Reference() *ReferenceObject {
 func (f *FTD) GetNetworkObjects() ([]*NetworkObject, error) {
 	var err error
 
-	data, err := f.Get("object/networks")
+	data, err := f.Get("object/networks", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +59,7 @@ func (f *FTD) GetNetworkObjectByID(id string) (*NetworkObject, error) {
 	var err error
 
 	endpoint := fmt.Sprintf("object/networks/%s", id)
-	data, err := f.Get(endpoint)
+	data, err := f.Get(endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -76,12 +77,73 @@ func (f *FTD) GetNetworkObjectByID(id string) (*NetworkObject, error) {
 	return v, nil
 }
 
-// CreateNetworkObject Create a new network object
-func (f *FTD) CreateNetworkObject(n *NetworkObject) error {
+func (f *FTD) getNetworkObjectBy(filterString string) ([]*NetworkObject, error) {
 	var err error
+
+	filter := make(map[string]string)
+	filter["filter"] = filterString
+
+	endpoint := "object/networks"
+	data, err := f.Get(endpoint, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var v struct {
+		Items []*NetworkObject `json:"items"`
+	}
+
+	err = json.Unmarshal(data, &v)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return nil, err
+	}
+
+	return v.Items, nil
+}
+
+// CreateNetworkObject Create a new network object
+func (f *FTD) CreateNetworkObject(n *NetworkObject, ignoreDuplicate bool) error {
+	var err error
+	duplicate := false
 
 	n.Type = "networkobject"
 	data, err := f.Post("object/networks", n)
+	if err != nil {
+		ftdErr := err.(*FTDError)
+		spew.Dump(ftdErr)
+		if len(ftdErr.Message) > 0 && ftdErr.Message[0].Code == "duplicateName" {
+			duplicate = true
+			if f.debug {
+				glog.Errorf("This is a duplicate\n")
+			}
+			if !ignoreDuplicate {
+				return err
+			}
+		} else {
+			if f.debug {
+				glog.Errorf("Error: %s\n", err)
+			}
+			return err
+		}
+	}
+
+	if !duplicate {
+		err = json.Unmarshal(data, &n)
+		if err != nil {
+			if f.debug {
+				glog.Errorf("Error: %s\n", err)
+			}
+			return err
+		}
+
+		return nil
+	}
+
+	query := fmt.Sprintf("name:%s", n.Name)
+	obj, err := f.getNetworkObjectBy(query)
 	if err != nil {
 		if f.debug {
 			glog.Errorf("Error: %s\n", err)
@@ -89,12 +151,8 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject) error {
 		return err
 	}
 
-	err = json.Unmarshal(data, &n)
-	if err != nil {
-		if f.debug {
-			glog.Errorf("Error: %s\n", err)
-		}
-		return err
+	if len(obj) == 1 {
+		*n = *obj[0]
 	}
 
 	return nil

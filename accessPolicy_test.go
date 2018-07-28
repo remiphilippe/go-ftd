@@ -28,7 +28,7 @@ func setupTestAccessRuleObjects(t *testing.T) error {
 	n1.SubType = "HOST"
 	n1.Value = "1.1.1.1"
 
-	err = ftd.CreateNetworkObject(n1)
+	err = ftd.CreateNetworkObject(n1, true)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return err
@@ -75,13 +75,11 @@ func TestGetAccessRules(t *testing.T) {
 		return
 	}
 
-	obj, err := ftd.GetAccessRules("default")
+	_, err = ftd.GetAccessRules("default")
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
 	}
-
-	spew.Dump(obj)
 }
 
 func TestCreateAccessRules(t *testing.T) {
