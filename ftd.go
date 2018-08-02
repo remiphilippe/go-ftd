@@ -228,9 +228,9 @@ func (f *FTD) Post(endpoint string, ftdReq interface{}) (bodyText []byte, err er
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		err = parseResponse(bodyText, authenticating)
 		if err != nil {
-			if f.debug {
-				glog.Errorf("POST - parse response error: %s\n", err)
-			}
+			// if f.debug {
+			// 	glog.Errorf("POST - parse response error: %s\n", err)
+			// }
 			return nil, err
 		}
 
@@ -353,8 +353,7 @@ func (f *FTD) Get(endpoint string, uriQuery map[string]string) (bodyText []byte,
 		return nil, err
 	}
 
-	log.Print("Response: " + strconv.Itoa(resp.StatusCode))
-	//spew.Dump(string(bodyText))
+	glog.Infof("Response: %d\n", resp.StatusCode)
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		err = parseResponse(bodyText, false)
 		if err != nil {
@@ -406,7 +405,7 @@ func (f *FTD) Delete(endpoint string) (err error) {
 		return err
 	}
 
-	log.Print("Response: " + strconv.Itoa(resp.StatusCode))
+	glog.Infof("Response: %d\n", resp.StatusCode)
 	err = parseResponse(bodyText, false)
 	if err != nil {
 		if f.debug {

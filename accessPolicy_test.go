@@ -28,7 +28,7 @@ func setupTestAccessRuleObjects(t *testing.T) error {
 	n1.SubType = "HOST"
 	n1.Value = "1.1.1.1"
 
-	err = ftd.CreateNetworkObject(n1, true)
+	err = ftd.CreateNetworkObject(n1, duplicateActionReplace)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return err
@@ -92,8 +92,8 @@ func TestCreateAccessRules(t *testing.T) {
 	}
 	a := new(AccessRule)
 	a.Name = "testPolicy001"
-	a.RuleAction = "PERMIT"
-	a.EventLogAction = "LOG_NONE"
+	a.RuleAction = RuleActionPermit
+	a.EventLogAction = LogActionNone
 
 	err = ftd.CreateAccessRule(a, "default")
 	if err != nil {
@@ -124,8 +124,8 @@ func TestCombinedCreateAccessRules(t *testing.T) {
 
 	a := new(AccessRule)
 	a.Name = "testPolicy001"
-	a.RuleAction = "PERMIT"
-	a.EventLogAction = "LOG_NONE"
+	a.RuleAction = RuleActionPermit
+	a.EventLogAction = LogActionNone
 	a.DestinationNetworks = append(a.DestinationNetworks, n1.Reference())
 	a.DestinationNetworks = append(a.DestinationNetworks, g1.Reference())
 

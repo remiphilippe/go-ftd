@@ -13,7 +13,7 @@ func initTest() (*FTD, error) {
 	params["grant_type"] = "password"
 	params["username"] = os.Getenv("FTD_USER")
 	params["password"] = os.Getenv("FTD_PASSWORD")
-	params["debug"] = "false"
+	params["debug"] = "true"
 
 	ftd, err := NewFTD(os.Getenv("FTD_HOST"), params)
 	if err != nil {

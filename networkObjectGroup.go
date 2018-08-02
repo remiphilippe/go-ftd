@@ -52,6 +52,33 @@ func (f *FTD) GetNetworkObjectGroups() ([]*NetworkObjectGroup, error) {
 	return v.Items, nil
 }
 
+func (f *FTD) getNetworkObjectGroupBy(filterString string) ([]*NetworkObjectGroup, error) {
+	var err error
+
+	filter := make(map[string]string)
+	filter["filter"] = filterString
+
+	endpoint := "object/networkgroups"
+	data, err := f.Get(endpoint, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	var v struct {
+		Items []*NetworkObjectGroup `json:"items"`
+	}
+
+	err = json.Unmarshal(data, &v)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return nil, err
+	}
+
+	return v.Items, nil
+}
+
 // CreateNetworkObjectGroup Create a new network object
 func (f *FTD) CreateNetworkObjectGroup(n *NetworkObjectGroup) error {
 	var err error
@@ -82,6 +109,76 @@ func (f *FTD) DeleteNetworkObjectGroup(n *NetworkObjectGroup) error {
 
 	endpoint := fmt.Sprintf("object/networkgroups/%s", n.ID)
 	err = f.Delete(endpoint)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return err
+	}
+
+	return nil
+}
+
+// UpdateNetworkObjectGroup Updates a network object group
+func (f *FTD) UpdateNetworkObjectGroup(n *NetworkObjectGroup) error {
+	var err error
+
+	endpoint := fmt.Sprintf("object/networkgroups/%s", n.ID)
+	data, err := f.Put(endpoint, n)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return err
+	}
+
+	err = json.Unmarshal(data, &n)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return err
+	}
+
+	return nil
+}
+
+// AddToNetworkObjectGroup Add a Network to an Object Group
+func (f *FTD) AddToNetworkObjectGroup(g *NetworkObjectGroup, n *NetworkObject) error {
+	var err error
+	for k := range g.Objects {
+		if g.Objects[k].ID == n.ID {
+			if f.debug {
+				glog.Errorf("object already in object group\n")
+				return fmt.Errorf("object already in object group")
+			}
+		}
+	}
+
+	g.Objects = append(g.Objects, n.Reference())
+
+	err = f.UpdateNetworkObjectGroup(g)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return err
+	}
+
+	return nil
+}
+
+// DeleteFromNetworkObjectGroup Deletes a Network to an Object Group
+func (f *FTD) DeleteFromNetworkObjectGroup(g *NetworkObjectGroup, n *NetworkObject) error {
+	var err error
+	for k := range g.Objects {
+		if g.Objects[k].ID == n.ID {
+			g.Objects = append(g.Objects[:k], g.Objects[k+1:]...)
+			break
+		}
+	}
+
+	err = f.UpdateNetworkObjectGroup(g)
 	if err != nil {
 		if f.debug {
 			glog.Errorf("Error: %s\n", err)

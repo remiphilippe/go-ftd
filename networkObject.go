@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/golang/glog"
 )
 
@@ -105,21 +104,19 @@ func (f *FTD) getNetworkObjectBy(filterString string) ([]*NetworkObject, error) 
 }
 
 // CreateNetworkObject Create a new network object
-func (f *FTD) CreateNetworkObject(n *NetworkObject, ignoreDuplicate bool) error {
+func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 	var err error
-	duplicate := false
 
 	n.Type = "networkobject"
 	data, err := f.Post("object/networks", n)
 	if err != nil {
 		ftdErr := err.(*FTDError)
-		spew.Dump(ftdErr)
-		if len(ftdErr.Message) > 0 && ftdErr.Message[0].Code == "duplicateName" {
-			duplicate = true
+		//spew.Dump(ftdErr)
+		if len(ftdErr.Message) > 0 && (ftdErr.Message[0].Code == "duplicateName" || ftdErr.Message[0].Code == "newInstanceWithDuplicateId") {
 			if f.debug {
 				glog.Errorf("This is a duplicate\n")
 			}
-			if !ignoreDuplicate {
+			if duplicateAction == duplicateActionDoNothing {
 				return err
 			}
 		} else {
@@ -130,7 +127,7 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, ignoreDuplicate bool) error 
 		}
 	}
 
-	if !duplicate {
+	if duplicateAction == duplicateActionDoNothing {
 		err = json.Unmarshal(data, &n)
 		if err != nil {
 			if f.debug {
@@ -140,19 +137,34 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, ignoreDuplicate bool) error 
 		}
 
 		return nil
-	}
-
-	query := fmt.Sprintf("name:%s", n.Name)
-	obj, err := f.getNetworkObjectBy(query)
-	if err != nil {
-		if f.debug {
-			glog.Errorf("Error: %s\n", err)
+	} else if duplicateAction == duplicateActionReplace {
+		query := fmt.Sprintf("name:%s", n.Name)
+		obj, err := f.getNetworkObjectBy(query)
+		if err != nil {
+			if f.debug {
+				glog.Errorf("Error: %s\n", err)
+			}
+			return err
 		}
-		return err
-	}
 
-	if len(obj) == 1 {
-		*n = *obj[0]
+		if len(obj) == 1 {
+			o := obj[0]
+			o.Value = n.Value
+			o.SubType = n.SubType
+
+			err = f.UpdateNetworkObject(o)
+			if err != nil {
+				if f.debug {
+					glog.Errorf("Error: %s\n", err)
+				}
+				return err
+			}
+
+			*n = *o
+
+			return nil
+
+		}
 	}
 
 	return nil
@@ -163,6 +175,30 @@ func (f *FTD) DeleteNetworkObject(n *NetworkObject) error {
 	var err error
 
 	err = f.Delete(fmt.Sprintf("object/networks/%s", n.ID))
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return err
+	}
+
+	return nil
+}
+
+// UpdateNetworkObject Updates a network object
+func (f *FTD) UpdateNetworkObject(n *NetworkObject) error {
+	var err error
+
+	endpoint := fmt.Sprintf("object/networks/%s", n.ID)
+	data, err := f.Put(endpoint, n)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return err
+	}
+
+	err = json.Unmarshal(data, &n)
 	if err != nil {
 		if f.debug {
 			glog.Errorf("Error: %s\n", err)
