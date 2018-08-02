@@ -1,10 +1,14 @@
 package goftd
 
 const (
-	grantTypePassword        string = "password"
-	grantTypeCustom          string = "custom_token"
-	duplicateActionDoNothing int    = 1
-	duplicateActionReplace   int    = 2
+	grantTypePassword string = "password"
+	grantTypeCustom   string = "custom_token"
+
+	//DuplicateActionDoNothing Don't do anything
+	DuplicateActionDoNothing int = 1
+
+	//DuplicateActionReplace Replace
+	DuplicateActionReplace int = 2
 
 	//LogActionNone LOG_NONE
 	LogActionNone string = "LOG_NONE"

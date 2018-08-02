@@ -28,7 +28,7 @@ func setupTestAccessRuleObjects(t *testing.T) error {
 	n1.SubType = "HOST"
 	n1.Value = "1.1.1.1"
 
-	err = ftd.CreateNetworkObject(n1, duplicateActionReplace)
+	err = ftd.CreateNetworkObject(n1, DuplicateActionReplace)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return err

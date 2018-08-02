@@ -116,7 +116,7 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 			if f.debug {
 				glog.Errorf("This is a duplicate\n")
 			}
-			if duplicateAction == duplicateActionDoNothing {
+			if duplicateAction == DuplicateActionDoNothing {
 				return err
 			}
 		} else {
@@ -127,7 +127,7 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 		}
 	}
 
-	if duplicateAction == duplicateActionDoNothing {
+	if duplicateAction == DuplicateActionDoNothing {
 		err = json.Unmarshal(data, &n)
 		if err != nil {
 			if f.debug {
@@ -137,7 +137,7 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 		}
 
 		return nil
-	} else if duplicateAction == duplicateActionReplace {
+	} else if duplicateAction == DuplicateActionReplace {
 		query := fmt.Sprintf("name:%s", n.Name)
 		obj, err := f.getNetworkObjectBy(query)
 		if err != nil {

@@ -36,7 +36,7 @@ func TestCreateNetworkObjectGroup(t *testing.T) {
 	n.SubType = "HOST"
 	n.Value = "1.1.1.1"
 
-	err = ftd.CreateNetworkObject(n, duplicateActionReplace)
+	err = ftd.CreateNetworkObject(n, DuplicateActionReplace)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
@@ -91,7 +91,7 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 	n.SubType = "HOST"
 	n.Value = "1.1.1.1"
 
-	err = ftd.CreateNetworkObject(n, duplicateActionReplace)
+	err = ftd.CreateNetworkObject(n, DuplicateActionReplace)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
@@ -102,7 +102,7 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 	n1.SubType = "HOST"
 	n1.Value = "2.2.2.2"
 
-	err = ftd.CreateNetworkObject(n1, duplicateActionReplace)
+	err = ftd.CreateNetworkObject(n1, DuplicateActionReplace)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
