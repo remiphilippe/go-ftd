@@ -242,7 +242,7 @@ func TestCreateNetworkObjectGroupFromIPs(t *testing.T) {
 		"9.10.11.12",
 	}
 
-	g, err := ftd.CreateNetworkObjectGroupFromIPs("testAutoCreate", ips1)
+	g, err := ftd.CreateNetworkObjectGroupFromIPs("testAutoCreate", ips1, DuplicateActionError)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return

@@ -90,7 +90,7 @@ func (f *FTD) CreateNetworkObjectGroup(n *NetworkObjectGroup, duplicateAction in
 		//spew.Dump(ftdErr)
 		if len(ftdErr.Message) > 0 && (ftdErr.Message[0].Code == "duplicateName" || ftdErr.Message[0].Code == "newInstanceWithDuplicateId") {
 			if f.debug {
-				glog.Errorf("This is a duplicate\n")
+				glog.Warningf("This is a duplicate\n")
 			}
 			if duplicateAction == DuplicateActionError {
 				return err
@@ -238,22 +238,8 @@ func (f *FTD) DeleteFromNetworkObjectGroup(g *NetworkObjectGroup, n *NetworkObje
 }
 
 // CreateNetworkObjectGroupFromIPs Create an object group from an array of ip address. Network objects = ip.
-// Only works for new groups (not updates)
-func (f *FTD) CreateNetworkObjectGroupFromIPs(name string, ips []string) (*NetworkObjectGroup, error) {
+func (f *FTD) CreateNetworkObjectGroupFromIPs(name string, ips []string, duplicateAction int) (*NetworkObjectGroup, error) {
 	var err error
-
-	query := fmt.Sprintf("name:%s", name)
-	groups, err := f.getNetworkObjectGroupBy(query)
-	if err != nil {
-		if f.debug {
-			glog.Errorf("Error: %s\n", err)
-		}
-		return nil, err
-	}
-
-	if len(groups) > 0 {
-		return nil, fmt.Errorf("Duplicate Group Name")
-	}
 
 	ns, err := f.CreateNetworkObjectsFromIPs(ips)
 	if err != nil {
@@ -270,7 +256,7 @@ func (f *FTD) CreateNetworkObjectGroupFromIPs(name string, ips []string) (*Netwo
 		g.Objects = append(g.Objects, ns[i].Reference())
 	}
 
-	err = f.CreateNetworkObjectGroup(g, DuplicateActionError)
+	err = f.CreateNetworkObjectGroup(g, duplicateAction)
 	if err != nil {
 		if f.debug {
 			glog.Errorf("Error: %s\n", err)
