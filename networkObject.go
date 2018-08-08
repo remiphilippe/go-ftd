@@ -33,8 +33,11 @@ func (n *NetworkObject) Reference() *ReferenceObject {
 func (f *FTD) GetNetworkObjects() ([]*NetworkObject, error) {
 	var err error
 
+	filter := make(map[string]string)
+	filter["limit"] = "0"
+
 	endpoint := apiNetworksEndpoint
-	data, err := f.Get(endpoint, nil)
+	data, err := f.Get(endpoint, filter)
 	if err != nil {
 		return nil, err
 	}
