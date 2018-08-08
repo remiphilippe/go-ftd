@@ -10,11 +10,12 @@ import (
 // NetworkObject An object represents the network (Note: The field level constraints listed here might not cover all the constraints on the field. Additional constraints might exist.)
 type NetworkObject struct {
 	ReferenceObject
-	Description     string `json:"description,omitempty"`
-	SubType         string `json:"subType"`
-	Value           string `json:"value"`
-	IsSystemDefined bool   `json:"isSystemDefined,omitempty"`
-	Links           *Links `json:"links,omitempty"`
+	Description     string  `json:"description,omitempty"`
+	SubType         string  `json:"subType"`
+	Value           string  `json:"value"`
+	IsSystemDefined bool    `json:"isSystemDefined,omitempty"`
+	Links           *Links  `json:"links,omitempty"`
+	Paging          *Paging `json:"paging,omitempty"`
 }
 
 // Reference Returns a reference object
@@ -33,7 +34,8 @@ func (n *NetworkObject) Reference() *ReferenceObject {
 func (f *FTD) GetNetworkObjects() ([]*NetworkObject, error) {
 	var err error
 
-	data, err := f.Get("object/networks", nil)
+	endpoint := apiNetworksEndpoint
+	data, err := f.Get(endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +59,7 @@ func (f *FTD) GetNetworkObjects() ([]*NetworkObject, error) {
 func (f *FTD) GetNetworkObjectByID(id string) (*NetworkObject, error) {
 	var err error
 
-	endpoint := fmt.Sprintf("object/networks/%s", id)
+	endpoint := fmt.Sprintf("%s/%s", apiNetworksEndpoint, id)
 	data, err := f.Get(endpoint, nil)
 	if err != nil {
 		return nil, err
@@ -82,7 +84,7 @@ func (f *FTD) getNetworkObjectBy(filterString string) ([]*NetworkObject, error) 
 	filter := make(map[string]string)
 	filter["filter"] = filterString
 
-	endpoint := "object/networks"
+	endpoint := apiNetworksEndpoint
 	data, err := f.Get(endpoint, filter)
 	if err != nil {
 		return nil, err
@@ -108,13 +110,13 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 	var err error
 
 	n.Type = "networkobject"
-	data, err := f.Post("object/networks", n)
+	data, err := f.Post(apiNetworksEndpoint, n)
 	if err != nil {
 		ftdErr := err.(*FTDError)
 		//spew.Dump(ftdErr)
 		if len(ftdErr.Message) > 0 && (ftdErr.Message[0].Code == "duplicateName" || ftdErr.Message[0].Code == "newInstanceWithDuplicateId") {
 			if f.debug {
-				glog.Errorf("This is a duplicate\n")
+				glog.Warningf("This is a duplicate\n")
 			}
 			if duplicateAction == DuplicateActionDoNothing {
 				return err
@@ -174,7 +176,7 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 func (f *FTD) DeleteNetworkObject(n *NetworkObject) error {
 	var err error
 
-	err = f.Delete(fmt.Sprintf("object/networks/%s", n.ID))
+	err = f.Delete(fmt.Sprintf("%s/%s", apiNetworksEndpoint, n.ID))
 	if err != nil {
 		if f.debug {
 			glog.Errorf("Error: %s\n", err)
@@ -189,7 +191,7 @@ func (f *FTD) DeleteNetworkObject(n *NetworkObject) error {
 func (f *FTD) UpdateNetworkObject(n *NetworkObject) error {
 	var err error
 
-	endpoint := fmt.Sprintf("object/networks/%s", n.ID)
+	endpoint := fmt.Sprintf("%s/%s", apiNetworksEndpoint, n.ID)
 	data, err := f.Put(endpoint, n)
 	if err != nil {
 		if f.debug {

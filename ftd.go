@@ -33,6 +33,9 @@ type FTD struct {
 	Hostname string
 	// Define authorization type as password or custom
 	GrantType string
+
+	Insecure bool
+
 	// store access token and refresh token
 	accessToken  string
 	refreshToken string
@@ -42,6 +45,16 @@ type FTD struct {
 	customGrant   *customGrant
 
 	debug bool
+}
+
+type requestParameters struct {
+	// Request for POST / PUT
+	FTDRequest interface{}
+	// URI Query if needed (GET)
+	URIQuery map[string]string
+	// Paging parameters for GET
+	PageStart int
+	PageLimit int
 }
 
 // Links Embedded links
@@ -55,6 +68,16 @@ type ReferenceObject struct {
 	Version string `json:"version,omitempty"`
 	Name    string `json:"name"`
 	Type    string `json:"type"`
+}
+
+// Paging Paging Information
+type Paging struct {
+	Prev   []string `json:"prev,omitempty"`
+	Next   []string `json:"next,omitempty"`
+	Limit  int      `json:"limit,omitempty"`
+	Offset int      `json:"offset,omitempty"`
+	Count  int      `json:"count,omitempty"`
+	Pages  int      `json:"pages,omitempty"`
 }
 
 func (f *FTD) updateToken() error {
@@ -117,10 +140,17 @@ func NewFTD(hostname string, param map[string]string) (*FTD, error) {
 	f := new(FTD)
 	f.Hostname = hostname
 	f.debug = false
+	f.Insecure = false
 
 	if _, ok := param["debug"]; ok {
 		if param["debug"] == "true" {
 			f.debug = true
+		}
+	}
+
+	if _, ok := param["insecure"]; ok {
+		if param["insecure"] == "true" {
+			f.Insecure = true
 		}
 	}
 
@@ -163,44 +193,73 @@ func NewFTD(hostname string, param map[string]string) (*FTD, error) {
 	return f, nil
 }
 
-// Post POST to ASA API
-func (f *FTD) Post(endpoint string, ftdReq interface{}) (bodyText []byte, err error) {
+func (f *FTD) request(endpoint, method string, r *requestParameters) (bodyText []byte, err error) {
 	var authenticating bool
+	var req *http.Request
+	var jsonReq []byte
+	var body io.Reader
 
-	if endpoint != "fdm/token" {
-		authenticating = false
-	} else {
+	if endpoint == apiTokenEndpoint && method == "POST" {
 		authenticating = true
+	} else {
+		authenticating = false
 	}
 
 	uri := url.URL{
 		Host:   f.Hostname,
 		Scheme: "https",
-		Path:   "api/fdm/v1/" + endpoint,
+		Path:   apiBasePath + endpoint,
 	}
 
-	var jsonReq []byte
-	var body io.Reader
+	switch method {
+	case apiPOST, apiPUT:
+		if r != nil && r.FTDRequest != nil {
+			jsonReq, err = json.Marshal(r.FTDRequest)
+			if err != nil {
+				glog.Errorf("request - marshall error: %s\n", err)
+				return nil, err
+			}
+			body = bytes.NewBuffer(jsonReq)
+		} else {
+			body = nil
+		}
 
-	if ftdReq != nil {
-		jsonReq, err = json.Marshal(ftdReq)
+		req, err = http.NewRequest(method, uri.String(), body)
 		if err != nil {
-			glog.Errorf("POST - marshall error: %s\n", err)
+			glog.Errorln(err)
 			return nil, err
 		}
-		body = bytes.NewBuffer(jsonReq)
-	} else {
-		body = nil
-	}
+		req.Header.Set("Content-Type", "application/json")
 
-	//spew.Dump(string(jsonReq))
+	case apiGET, apiDELETE:
+		req, err = http.NewRequest(method, uri.String(), nil)
+		if err != nil {
+			log.Print(err)
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/json")
 
-	req, err := http.NewRequest("POST", uri.String(), body)
-	if err != nil {
-		glog.Errorln(err)
-		return nil, err
+		q := req.URL.Query()
+		if r != nil {
+			for k, v := range r.URIQuery {
+				q.Add(k, v)
+			}
+		}
+		// if method == apiGET {
+		// 	if r != nil && r.PageLimit > 0 {
+		// 		q.Add("limit", string(r.PageLimit))
+		// 	}
+
+		// 	if r != nil && r.PageStart > 0 {
+		// 		q.Add("start", string(r.PageStart))
+		// 	}
+		// }
+
+		req.URL.RawQuery = q.Encode()
+
+	default:
+		return nil, fmt.Errorf("Unknown Method %s", method)
 	}
-	req.Header.Set("Content-Type", "application/json")
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -219,7 +278,7 @@ func (f *FTD) Post(endpoint string, ftdReq interface{}) (bodyText []byte, err er
 
 	bodyText, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		glog.Errorf("POST - readall error: %s\n", err)
+		glog.Errorf("request - readall error: %s\n", err)
 		spew.Dump(resp)
 		return nil, err
 	}
@@ -240,179 +299,32 @@ func (f *FTD) Post(endpoint string, ftdReq interface{}) (bodyText []byte, err er
 	return bodyText, nil
 }
 
+// Post POST to ASA API
+func (f *FTD) Post(endpoint string, ftdReq interface{}) (bodyText []byte, err error) {
+	r := requestParameters{
+		FTDRequest: ftdReq,
+	}
+	return f.request(endpoint, apiPOST, &r)
+}
+
 // Put PUT to ASA API
 func (f *FTD) Put(endpoint string, ftdReq interface{}) (bodyText []byte, err error) {
-	uri := url.URL{
-		Host:   f.Hostname,
-		Scheme: "https",
-		Path:   "api/fdm/v1/" + endpoint,
+	r := requestParameters{
+		FTDRequest: ftdReq,
 	}
-
-	var jsonReq []byte
-	var body io.Reader
-
-	if ftdReq != nil {
-		jsonReq, err = json.Marshal(ftdReq)
-		if err != nil {
-			glog.Errorf("POST - marshall error: %s\n", err)
-			return nil, err
-		}
-		body = bytes.NewBuffer(jsonReq)
-	} else {
-		body = nil
-	}
-
-	//spew.Dump(string(jsonReq))
-
-	req, err := http.NewRequest("PUT", uri.String(), body)
-	if err != nil {
-		glog.Errorln(err)
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	if endpoint != "fdm/token" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", f.accessToken))
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		glog.Errorln(err)
-		return nil, err
-	}
-
-	bodyText, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		glog.Errorf("POST - readall error: %s\n", err)
-		spew.Dump(resp)
-		return nil, err
-	}
-
-	glog.Infof("Response: %s\n", strconv.Itoa(resp.StatusCode))
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		err = parseResponse(bodyText, false)
-		if err != nil {
-			if f.debug {
-				glog.Errorf("POST - parse response error: %s\n", err)
-			}
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("response code: %d", resp.StatusCode)
-	}
-
-	return bodyText, nil
+	return f.request(endpoint, apiPUT, &r)
 }
 
 // Get GET to ASA API
 func (f *FTD) Get(endpoint string, uriQuery map[string]string) (bodyText []byte, err error) {
-	uri := url.URL{
-		Host:   f.Hostname,
-		Scheme: "https",
-		Path:   "api/fdm/v1/" + endpoint,
+	r := requestParameters{
+		URIQuery: uriQuery,
 	}
-
-	req, err := http.NewRequest("GET", uri.String(), nil)
-	if err != nil {
-		log.Print(err)
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	q := req.URL.Query()
-	for k, v := range uriQuery {
-		q.Add(k, v)
-	}
-	req.URL.RawQuery = q.Encode()
-
-	if f.accessToken == "" {
-		return nil, fmt.Errorf("accessToken is not set, did you initialize correctly?")
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", f.accessToken))
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Print(err)
-		return nil, err
-	}
-
-	bodyText, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		glog.Errorf("GET - readall error: %s\n", err)
-		spew.Dump(resp)
-		return nil, err
-	}
-
-	glog.Infof("Response: %d\n", resp.StatusCode)
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		err = parseResponse(bodyText, false)
-		if err != nil {
-			if f.debug {
-				glog.Errorf("GET - parse response error: %s\n", err)
-			}
-			return nil, err
-		}
-	}
-
-	return bodyText, nil
+	return f.request(endpoint, apiGET, &r)
 }
 
 // Delete DELETE to ASA API
 func (f *FTD) Delete(endpoint string) (err error) {
-	uri := url.URL{
-		Host:   f.Hostname,
-		Scheme: "https",
-		Path:   "api/fdm/v1/" + endpoint,
-	}
-
-	req, err := http.NewRequest("DELETE", uri.String(), nil)
-	if err != nil {
-		log.Print(err)
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	if f.accessToken == "" {
-		return fmt.Errorf("accessToken is not set, did you initialize correctly?")
-	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", f.accessToken))
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Print(err)
-		return err
-	}
-
-	bodyText, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		glog.Errorf("DELETE - readall error: %s\n", err)
-		spew.Dump(resp)
-		return err
-	}
-
-	glog.Infof("Response: %d\n", resp.StatusCode)
-	err = parseResponse(bodyText, false)
-	if err != nil {
-		if f.debug {
-			glog.Errorf("DELETE - parse response error: %s\n", err)
-		}
-		return err
-	}
-
-	return nil
+	_, err = f.request(endpoint, apiDELETE, nil)
+	return err
 }

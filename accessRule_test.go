@@ -38,7 +38,7 @@ func setupTestAccessRuleObjects(t *testing.T) error {
 	g1.Name = "testObjGroup001"
 	g1.Objects = append(g1.Objects, n1.Reference())
 
-	err = ftd.CreateNetworkObjectGroup(g1)
+	err = ftd.CreateNetworkObjectGroup(g1, DuplicateActionReplace)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return err

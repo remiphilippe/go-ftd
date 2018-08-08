@@ -2,6 +2,8 @@ package goftd
 
 import (
 	"testing"
+
+	"github.com/golang/glog"
 )
 
 func TestGetNetworkObjectGroup(t *testing.T) {
@@ -46,7 +48,7 @@ func TestCreateNetworkObjectGroup(t *testing.T) {
 	g.Name = "testObjGroup001"
 	g.Objects = append(g.Objects, n.Reference())
 
-	err = ftd.CreateNetworkObjectGroup(g)
+	err = ftd.CreateNetworkObjectGroup(g, DuplicateActionReplace)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
@@ -112,7 +114,7 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 	g.Name = "testObjGroup001"
 	g.Objects = append(g.Objects, n.Reference())
 
-	err = ftd.CreateNetworkObjectGroup(g)
+	err = ftd.CreateNetworkObjectGroup(g, DuplicateActionReplace)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
@@ -165,4 +167,60 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 		t.Errorf("error: %s\n", err)
 		return
 	}
+}
+
+func TestDuplicateNetworkObjectGroupDoNothing(t *testing.T) {
+	var err error
+
+	ftd, err := initTest()
+	if err != nil {
+		glog.Errorf("error: %s\n", err)
+		return
+	}
+
+	n := new(NetworkObject)
+	n.Name = "testObj001"
+	n.SubType = "HOST"
+	n.Value = "1.1.1.1"
+
+	err = ftd.CreateNetworkObject(n, DuplicateActionReplace)
+	if err != nil {
+		t.Errorf("error: %s\n", err)
+		return
+	}
+
+	g := new(NetworkObjectGroup)
+	g.Name = "testObjGroup001"
+	g.Objects = append(g.Objects, n.Reference())
+
+	err = ftd.CreateNetworkObjectGroup(g, DuplicateActionReplace)
+	if err != nil {
+		t.Errorf("error: %s\n", err)
+		return
+	}
+
+	g1 := new(NetworkObjectGroup)
+	g1.Name = "testObjGroup001"
+	g1.Objects = append(g1.Objects, n.Reference())
+
+	err = ftd.CreateNetworkObjectGroup(g1, DuplicateActionDoNothing)
+	if err != nil {
+		return
+	}
+
+	t.Errorf("should have returned an error...\n")
+
+	err = ftd.DeleteNetworkObjectGroup(g)
+	if err != nil {
+		glog.Errorf("error: %s\n", err)
+		return
+	}
+
+	err = ftd.DeleteNetworkObject(n)
+	if err != nil {
+		glog.Errorf("error: %s\n", err)
+		return
+	}
+
+	return
 }
