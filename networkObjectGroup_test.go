@@ -203,7 +203,7 @@ func TestDuplicateNetworkObjectGroupDoNothing(t *testing.T) {
 	g1.Name = "testObjGroup001"
 	g1.Objects = append(g1.Objects, n.Reference())
 
-	err = ftd.CreateNetworkObjectGroup(g1, DuplicateActionDoNothing)
+	err = ftd.CreateNetworkObjectGroup(g1, DuplicateActionError)
 	if err != nil {
 		return
 	}

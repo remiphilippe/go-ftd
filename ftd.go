@@ -101,7 +101,7 @@ func (f *FTD) updateToken() error {
 		req["password"] = f.passwordGrant.Password
 	}
 
-	data, err := f.Post("fdm/token", req)
+	data, err := f.Post(apiTokenEndpoint, req)
 	if err != nil {
 		return err
 	}

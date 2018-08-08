@@ -21,6 +21,9 @@ const (
 	// TypeTCPPortObject object type tcp port
 	TypeTCPPortObject string = "tcpportobject"
 
+	//DuplicateActionError Error on duplicate
+	DuplicateActionError int = 0
+
 	//DuplicateActionDoNothing Don't do anything
 	DuplicateActionDoNothing int = 1
 

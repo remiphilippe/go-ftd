@@ -14,7 +14,6 @@ type Port struct {
 	Port            string `json:"port,omitempty"`
 	IsSystemDefined bool   `json:"isSystemDefined,omitempty"`
 	Links           *Links `json:"links,omitempty"`
-	//Paging          *Paging `json:"paging,omitempty"`
 }
 
 // Reference Returns a reference object

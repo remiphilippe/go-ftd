@@ -14,7 +14,6 @@ type NetworkObjectGroup struct {
 	IsSystemDefined bool               `json:"isSystemDefined,omitempty"`
 	Objects         []*ReferenceObject `json:"objects,omitempty"`
 	Links           *Links             `json:"links,omitempty"`
-	Paging          *Paging            `json:"paging,omitempty"`
 }
 
 // Reference Returns a reference object
@@ -85,7 +84,7 @@ func (f *FTD) CreateNetworkObjectGroup(n *NetworkObjectGroup, duplicateAction in
 	var err error
 
 	n.Type = "networkobjectgroup"
-	data, err := f.Post("object/networkgroups", n)
+	_, err = f.Post("object/networkgroups", n)
 	if err != nil {
 		ftdErr := err.(*FTDError)
 		//spew.Dump(ftdErr)
@@ -93,7 +92,7 @@ func (f *FTD) CreateNetworkObjectGroup(n *NetworkObjectGroup, duplicateAction in
 			if f.debug {
 				glog.Errorf("This is a duplicate\n")
 			}
-			if duplicateAction == DuplicateActionDoNothing {
+			if duplicateAction == DuplicateActionError {
 				return err
 			}
 		} else {
@@ -104,36 +103,8 @@ func (f *FTD) CreateNetworkObjectGroup(n *NetworkObjectGroup, duplicateAction in
 		}
 	}
 
-	if duplicateAction == DuplicateActionReplace {
-		query := fmt.Sprintf("name:%s", n.Name)
-		obj, err := f.getNetworkObjectGroupBy(query)
-		if err != nil {
-			if f.debug {
-				glog.Errorf("Error: %s\n", err)
-			}
-			return err
-		}
-
-		if len(obj) == 1 {
-			o := obj[0]
-			o.Objects = n.Objects
-
-			err = f.UpdateNetworkObjectGroup(o)
-			if err != nil {
-				if f.debug {
-					glog.Errorf("Error: %s\n", err)
-				}
-				return err
-			}
-
-			*n = *o
-
-			return nil
-
-		}
-	}
-
-	err = json.Unmarshal(data, &n)
+	query := fmt.Sprintf("name:%s", n.Name)
+	obj, err := f.getNetworkObjectGroupBy(query)
 	if err != nil {
 		if f.debug {
 			glog.Errorf("Error: %s\n", err)
@@ -141,7 +112,43 @@ func (f *FTD) CreateNetworkObjectGroup(n *NetworkObjectGroup, duplicateAction in
 		return err
 	}
 
+	var o *NetworkObjectGroup
+	if len(obj) == 1 {
+		o = obj[0]
+	} else {
+		if f.debug {
+			glog.Errorf("Error: length of object is not 1\n")
+		}
+		return err
+	}
+
+	switch duplicateAction {
+	case DuplicateActionReplace:
+		o.Objects = n.Objects
+
+		err = f.UpdateNetworkObjectGroup(o)
+		if err != nil {
+			if f.debug {
+				glog.Errorf("Error: %s\n", err)
+			}
+			return err
+		}
+	}
+
+	*n = *o
 	return nil
+
+	// }
+
+	// err = json.Unmarshal(data, &n)
+	// if err != nil {
+	// 	if f.debug {
+	// 		glog.Errorf("Error: %s\n", err)
+	// 	}
+	// 	return err
+	// }
+
+	// return nil
 }
 
 // DeleteNetworkObjectGroup Delete a network object

@@ -10,12 +10,11 @@ import (
 // NetworkObject An object represents the network (Note: The field level constraints listed here might not cover all the constraints on the field. Additional constraints might exist.)
 type NetworkObject struct {
 	ReferenceObject
-	Description     string  `json:"description,omitempty"`
-	SubType         string  `json:"subType"`
-	Value           string  `json:"value"`
-	IsSystemDefined bool    `json:"isSystemDefined,omitempty"`
-	Links           *Links  `json:"links,omitempty"`
-	Paging          *Paging `json:"paging,omitempty"`
+	Description     string `json:"description,omitempty"`
+	SubType         string `json:"subType"`
+	Value           string `json:"value"`
+	IsSystemDefined bool   `json:"isSystemDefined,omitempty"`
+	Links           *Links `json:"links,omitempty"`
 }
 
 // Reference Returns a reference object
@@ -110,7 +109,7 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 	var err error
 
 	n.Type = "networkobject"
-	data, err := f.Post(apiNetworksEndpoint, n)
+	_, err = f.Post(apiNetworksEndpoint, n)
 	if err != nil {
 		ftdErr := err.(*FTDError)
 		//spew.Dump(ftdErr)
@@ -118,7 +117,7 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 			if f.debug {
 				glog.Warningf("This is a duplicate\n")
 			}
-			if duplicateAction == DuplicateActionDoNothing {
+			if duplicateAction == DuplicateActionError {
 				return err
 			}
 		} else {
@@ -129,46 +128,40 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 		}
 	}
 
-	if duplicateAction == DuplicateActionDoNothing {
-		err = json.Unmarshal(data, &n)
+	query := fmt.Sprintf("name:%s", n.Name)
+	obj, err := f.getNetworkObjectBy(query)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return err
+	}
+
+	var o *NetworkObject
+	if len(obj) == 1 {
+		o = obj[0]
+	} else {
+		if f.debug {
+			glog.Errorf("Error: length of object is not 1\n")
+		}
+		return err
+	}
+
+	switch duplicateAction {
+	case DuplicateActionReplace:
+		o.Value = n.Value
+		o.SubType = n.SubType
+
+		err = f.UpdateNetworkObject(o)
 		if err != nil {
 			if f.debug {
 				glog.Errorf("Error: %s\n", err)
 			}
 			return err
-		}
-
-		return nil
-	} else if duplicateAction == DuplicateActionReplace {
-		query := fmt.Sprintf("name:%s", n.Name)
-		obj, err := f.getNetworkObjectBy(query)
-		if err != nil {
-			if f.debug {
-				glog.Errorf("Error: %s\n", err)
-			}
-			return err
-		}
-
-		if len(obj) == 1 {
-			o := obj[0]
-			o.Value = n.Value
-			o.SubType = n.SubType
-
-			err = f.UpdateNetworkObject(o)
-			if err != nil {
-				if f.debug {
-					glog.Errorf("Error: %s\n", err)
-				}
-				return err
-			}
-
-			*n = *o
-
-			return nil
-
 		}
 	}
 
+	*n = *o
 	return nil
 }
 

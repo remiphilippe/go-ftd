@@ -1,7 +1,10 @@
 package goftd
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
 
 	"github.com/golang/glog"
 )
@@ -105,11 +108,12 @@ func TestDuplicateNetworkObjectDoNothing(t *testing.T) {
 
 	err = ftd.CreateNetworkObject(n1, DuplicateActionDoNothing)
 	if err != nil {
-		//glog.Errorf("error: %s\n", err)
+		t.Errorf("should not have error'd... error: %s\n", err)
 		return
 	}
 
-	t.Errorf("should have returned an error...\n")
+	fmt.Printf("n1\n")
+	spew.Dump(n1)
 
 	err = ftd.DeleteNetworkObject(n)
 	if err != nil {
@@ -140,7 +144,7 @@ func TestDuplicateNetworkID(t *testing.T) {
 		return
 	}
 
-	err = ftd.CreateNetworkObject(n, DuplicateActionDoNothing)
+	err = ftd.CreateNetworkObject(n, DuplicateActionError)
 	if err != nil {
 		//glog.Errorf("error: %s\n", err)
 		return
