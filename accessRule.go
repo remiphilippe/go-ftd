@@ -13,7 +13,7 @@ type AccessRule struct {
 	RuleID              int                `json:"ruleId,omitempty"`
 	SourceZones         []*ReferenceObject `json:"sourceZones,omitempty"`
 	DestinationZones    []*ReferenceObject `json:"destinationZones,omitempty"`
-	SourceNetwork       []*ReferenceObject `json:"sourceNetwork,omitempty"`
+	SourceNetworks      []*ReferenceObject `json:"sourceNetworks,omitempty"`
 	DestinationNetworks []*ReferenceObject `json:"destinationNetworks,omitempty"`
 	SourcePorts         []*ReferenceObject `json:"sourcePorts,omitempty"`
 	DestinationPorts    []*ReferenceObject `json:"destinationPorts,omitempty"`
