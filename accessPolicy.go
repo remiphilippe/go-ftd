@@ -3,6 +3,7 @@ package goftd
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/golang/glog"
 )
@@ -113,10 +114,13 @@ func (a *AccessPolicy) Reference() *ReferenceObject {
 }
 
 // GetAccessPolicies Get a list of access policies
-func (f *FTD) GetAccessPolicies() ([]*AccessPolicy, error) {
+func (f *FTD) GetAccessPolicies(limit int) ([]*AccessPolicy, error) {
 	var err error
 
-	data, err := f.Get("policy/accesspolicies", nil)
+	filter := make(map[string]string)
+	filter["limit"] = strconv.Itoa(limit)
+
+	data, err := f.Get("policy/accesspolicies", filter)
 	if err != nil {
 		return nil, err
 	}

@@ -12,7 +12,7 @@ func TestGetTCPPort(t *testing.T) {
 		return
 	}
 
-	ports, err := ftd.GetTCPPorts()
+	ports, err := ftd.GetTCPPortObjects()
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
@@ -32,32 +32,32 @@ func TestTCPPort(t *testing.T) {
 		return
 	}
 
-	p := new(Port)
-	p.Name = "testPort123"
-	p.Port = "123"
+	p1 := new(PortObject)
+	p1.Name = "testPort123"
+	p1.Port = "123"
 
-	err = ftd.CreateTCPPort(p, DuplicateActionDoNothing)
+	err = ftd.CreateTCPPortObject(p1, DuplicateActionDoNothing)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
 	}
 
-	if p.ID == "" || p.Version == "" {
+	if p1.ID == "" || p1.Version == "" {
 		t.Errorf("ID of value is not populated correctly\n")
 		return
 	}
 
-	t.Logf("object p: %+v\n", p)
+	t.Logf("object p1: %+v\n", p1)
 
-	p2, err := ftd.getPortBy("TCP", fmt.Sprintf("name:%s", p.Name))
+	p2, err := ftd.getPortObjectBy("TCP", fmt.Sprintf("name:%s", p1.Name))
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
 	}
 
 	if len(p2) == 1 {
-		if p2[0].ID != p.ID {
-			t.Errorf("expected ID %s, got %s\n", p.ID, p2[0].ID)
+		if p2[0].ID != p1.ID {
+			t.Errorf("expected ID %s, got %s\n", p1.ID, p2[0].ID)
 		}
 	} else {
 		t.Errorf("unexpected count for p2: %d\n", len(p2))
@@ -66,7 +66,7 @@ func TestTCPPort(t *testing.T) {
 
 	t.Logf("object p2: %+v\n", p2[0])
 
-	err = ftd.DeletePort(p)
+	err = ftd.DeletePortObject(p1)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
@@ -83,32 +83,32 @@ func TestUDPPort(t *testing.T) {
 		return
 	}
 
-	p := new(Port)
-	p.Name = "testPort123"
-	p.Port = "1234"
+	p1 := new(PortObject)
+	p1.Name = "testPort123"
+	p1.Port = "1234"
 
-	err = ftd.CreateUDPPort(p, DuplicateActionDoNothing)
+	err = ftd.CreateUDPPortObject(p1, DuplicateActionDoNothing)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
 	}
 
-	if p.ID == "" || p.Version == "" {
+	if p1.ID == "" || p1.Version == "" {
 		t.Errorf("ID of value is not populated correctly\n")
 		return
 	}
 
-	t.Logf("object p: %+v\n", p)
+	t.Logf("object p1: %+v\n", p1)
 
-	p2, err := ftd.getPortBy("UDP", fmt.Sprintf("name:%s", p.Name))
+	p2, err := ftd.getPortObjectBy("UDP", fmt.Sprintf("name:%s", p1.Name))
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
 	}
 
 	if len(p2) == 1 {
-		if p2[0].ID != p.ID {
-			t.Errorf("expected ID %s, got %s\n", p.ID, p2[0].ID)
+		if p2[0].ID != p1.ID {
+			t.Errorf("expected ID %s, got %s\n", p1.ID, p2[0].ID)
 		}
 	} else {
 		t.Errorf("unexpected count for p2: %d\n", len(p2))
@@ -117,7 +117,7 @@ func TestUDPPort(t *testing.T) {
 
 	t.Logf("object p2: %+v\n", p2[0])
 
-	err = ftd.DeletePort(p)
+	err = ftd.DeletePortObject(p1)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return

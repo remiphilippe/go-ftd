@@ -3,6 +3,7 @@ package goftd
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/golang/glog"
 )
@@ -30,11 +31,11 @@ func (n *NetworkObject) Reference() *ReferenceObject {
 }
 
 // GetNetworkObjects Get a list of network objects
-func (f *FTD) GetNetworkObjects() ([]*NetworkObject, error) {
+func (f *FTD) GetNetworkObjects(limit int) ([]*NetworkObject, error) {
 	var err error
 
 	filter := make(map[string]string)
-	filter["limit"] = "0"
+	filter["limit"] = strconv.Itoa(limit)
 
 	endpoint := apiNetworksEndpoint
 	data, err := f.Get(endpoint, filter)
@@ -80,11 +81,12 @@ func (f *FTD) GetNetworkObjectByID(id string) (*NetworkObject, error) {
 	return v, nil
 }
 
-func (f *FTD) getNetworkObjectBy(filterString string) ([]*NetworkObject, error) {
+func (f *FTD) getNetworkObjectBy(filterString string, limit int) ([]*NetworkObject, error) {
 	var err error
 
 	filter := make(map[string]string)
 	filter["filter"] = filterString
+	filter["limit"] = strconv.Itoa(limit)
 
 	endpoint := apiNetworksEndpoint
 	data, err := f.Get(endpoint, filter)
@@ -132,7 +134,7 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 	}
 
 	query := fmt.Sprintf("name:%s", n.Name)
-	obj, err := f.getNetworkObjectBy(query)
+	obj, err := f.getNetworkObjectBy(query, 0)
 	if err != nil {
 		if f.debug {
 			glog.Errorf("Error: %s\n", err)
@@ -173,7 +175,7 @@ func (f *FTD) CreateNetworkObjectsFromIPs(ips []string) ([]*NetworkObject, error
 	var err error
 	var retval []*NetworkObject
 
-	os, err := f.GetNetworkObjects()
+	os, err := f.GetNetworkObjects(0)
 	if err != nil {
 		if f.debug {
 			glog.Errorf("Error: %s\n", err)

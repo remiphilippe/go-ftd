@@ -73,7 +73,7 @@ func TestGetAccessRules(t *testing.T) {
 		return
 	}
 
-	_, err = ftd.GetAccessRules("default")
+	_, err = ftd.GetAccessRules("default", 0)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return

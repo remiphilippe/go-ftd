@@ -9,12 +9,13 @@ const (
 	apiDELETE string = "DELETE"
 	apiGET    string = "GET"
 
-	apiBasePath              string = "api/fdm/v1/"
-	apiTokenEndpoint         string = "fdm/token"
-	apiNetworksEndpoint      string = "object/networks"
-	apiNetworkGroupsEndpoint string = "object/networkgroups"
-	apiTCPPortsEndpoint      string = "object/tcpports"
-	apiUDPPortsEndpoint      string = "object/udpports"
+	apiBasePath                 string = "api/fdm/v1/"
+	apiTokenEndpoint            string = "fdm/token"
+	apiNetworksEndpoint         string = "object/networks"
+	apiNetworkGroupsEndpoint    string = "object/networkgroups"
+	apiTCPPortObjectsEndpoint   string = "object/tcpports"
+	apiUDPPortObjectsEndpoint   string = "object/udpports"
+	apiPortObjectGroupsEndpoint string = "object/portgroups"
 
 	// TypeUDPPortObject object type udp port
 	TypeUDPPortObject string = "udpportobject"

@@ -13,13 +13,13 @@ func TestGetNetworkObject(t *testing.T) {
 		return
 	}
 
-	_, err = ftd.GetNetworkObjects()
+	_, err = ftd.GetNetworkObjects(0)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
 	}
 
-	obj2, err := ftd.getNetworkObjectBy("name:any-ipv4")
+	obj2, err := ftd.getNetworkObjectBy("name:any-ipv4", 0)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return

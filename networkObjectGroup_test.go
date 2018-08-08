@@ -3,8 +3,6 @@ package goftd
 import (
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/golang/glog"
 )
 
@@ -15,7 +13,7 @@ func TestGetNetworkObjectGroup(t *testing.T) {
 		return
 	}
 
-	obj, err := ftd.GetNetworkObjectGroups()
+	obj, err := ftd.GetNetworkObjectGroups(0)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
@@ -90,21 +88,10 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 		return
 	}
 
-	n := new(NetworkObject)
-	n.Name = "testObj001"
-	n.SubType = "HOST"
-	n.Value = "1.1.1.1"
-
-	err = ftd.CreateNetworkObject(n, DuplicateActionReplace)
-	if err != nil {
-		t.Errorf("error: %s\n", err)
-		return
-	}
-
 	n1 := new(NetworkObject)
-	n1.Name = "testObj002"
+	n1.Name = "testObj001"
 	n1.SubType = "HOST"
-	n1.Value = "2.2.2.2"
+	n1.Value = "1.1.1.1"
 
 	err = ftd.CreateNetworkObject(n1, DuplicateActionReplace)
 	if err != nil {
@@ -112,9 +99,20 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 		return
 	}
 
+	n2 := new(NetworkObject)
+	n2.Name = "testObj002"
+	n2.SubType = "HOST"
+	n2.Value = "2.2.2.2"
+
+	err = ftd.CreateNetworkObject(n2, DuplicateActionReplace)
+	if err != nil {
+		t.Errorf("error: %s\n", err)
+		return
+	}
+
 	g := new(NetworkObjectGroup)
 	g.Name = "testObjGroup001"
-	g.Objects = append(g.Objects, n.Reference())
+	g.Objects = append(g.Objects, n1.Reference())
 
 	err = ftd.CreateNetworkObjectGroup(g, DuplicateActionReplace)
 	if err != nil {
@@ -122,7 +120,7 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 		return
 	}
 
-	err = ftd.AddToNetworkObjectGroup(g, n1)
+	err = ftd.AddToNetworkObjectGroup(g, n2)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
@@ -134,7 +132,7 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 
 	good := 0
 	for i := range g.Objects {
-		if g.Objects[i].ID != n.ID || g.Objects[i].ID != n1.ID {
+		if g.Objects[i].ID != n1.ID || g.Objects[i].ID != n2.ID {
 			break
 		}
 		good++
@@ -144,7 +142,7 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 		t.Errorf("objects are not the ones we were expecting\n")
 	}
 
-	err = ftd.DeleteFromNetworkObjectGroup(g, n)
+	err = ftd.DeleteFromNetworkObjectGroup(g, n1)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
@@ -154,7 +152,7 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 		t.Errorf("object not removed\n")
 	}
 
-	if g.Objects[0].ID != n1.ID {
+	if g.Objects[0].ID != n2.ID {
 		t.Errorf("wrong object removed\n")
 	}
 
@@ -164,7 +162,13 @@ func TestAddDeleteNetworkToNetworkGroup(t *testing.T) {
 		return
 	}
 
-	err = ftd.DeleteNetworkObject(n)
+	err = ftd.DeleteNetworkObject(n1)
+	if err != nil {
+		t.Errorf("error: %s\n", err)
+		return
+	}
+
+	err = ftd.DeleteNetworkObject(n2)
 	if err != nil {
 		t.Errorf("error: %s\n", err)
 		return
@@ -205,12 +209,11 @@ func TestDuplicateNetworkObjectGroupDoNothing(t *testing.T) {
 	g1.Name = "testObjGroup001"
 	g1.Objects = append(g1.Objects, n.Reference())
 
-	err = ftd.CreateNetworkObjectGroup(g1, DuplicateActionError)
+	err = ftd.CreateNetworkObjectGroup(g1, DuplicateActionDoNothing)
 	if err != nil {
+		t.Errorf("should not have returned an error...\n")
 		return
 	}
-
-	t.Errorf("should have returned an error...\n")
 
 	err = ftd.DeleteNetworkObjectGroup(g)
 	if err != nil {
@@ -248,7 +251,13 @@ func TestCreateNetworkObjectGroupFromIPs(t *testing.T) {
 		return
 	}
 
-	spew.Dump(g)
+	if g.ID == "" || g.Version == "" {
+		t.Errorf("Invalid ID or Version\n")
+	}
+
+	if len(g.Objects) != 3 {
+		t.Errorf("Not enough objects... %d\n", len(g.Objects))
+	}
 
 	err = ftd.DeleteNetworkObjectGroup(g)
 	if err != nil {
