@@ -1,10 +1,7 @@
 package goftd
 
 import (
-	"fmt"
 	"testing"
-
-	"github.com/davecgh/go-spew/spew"
 
 	"github.com/golang/glog"
 )
@@ -112,8 +109,8 @@ func TestDuplicateNetworkObjectDoNothing(t *testing.T) {
 		return
 	}
 
-	fmt.Printf("n1\n")
-	spew.Dump(n1)
+	// fmt.Printf("n1\n")
+	// spew.Dump(n1)
 
 	err = ftd.DeleteNetworkObject(n)
 	if err != nil {
@@ -207,4 +204,67 @@ func TestDuplicateNetworkObjectReplace(t *testing.T) {
 	}
 
 	return
+}
+
+func TestCreateNetworkObjectFromIPs(t *testing.T) {
+	var err error
+
+	ftd, err := initTest()
+	if err != nil {
+		glog.Errorf("error: %s\n", err)
+		return
+	}
+
+	ips1 := []string{
+		"1.2.3.4",
+		"5.6.7.8",
+		"9.10.11.12",
+	}
+
+	ips2 := []string{
+		"1.2.3.4",
+		"5.6.7.8",
+		"9.10.11.12",
+		"13.14.15.16",
+	}
+
+	ns, err := ftd.CreateNetworkObjectsFromIPs(ips1)
+	if err != nil {
+		t.Errorf("error: %s\n", err)
+		return
+	}
+
+	if len(ns) != 3 {
+		t.Errorf("we should have at least 3 members, have %d\n", len(ns))
+	}
+
+	ns2, err := ftd.CreateNetworkObjectsFromIPs(ips2)
+	if err != nil {
+		t.Errorf("error: %s\n", err)
+		return
+	}
+
+	if len(ns2) != 4 {
+		t.Errorf("we should have at least 4 members, have %d\n", len(ns2))
+	}
+
+	found := false
+	for i := range ns2 {
+		if ns2[i].Value == "13.14.15.16" {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Errorf("didn't find 13.14.15.16 in array\n")
+	}
+
+	for i := range ns2 {
+		err = ftd.DeleteNetworkObject(ns2[i])
+		if err != nil {
+			t.Errorf("error: %s\n", err)
+		}
+	}
+
 }

@@ -3,6 +3,8 @@ package goftd
 import (
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/golang/glog"
 )
 
@@ -223,4 +225,41 @@ func TestDuplicateNetworkObjectGroupDoNothing(t *testing.T) {
 	}
 
 	return
+}
+
+func TestCreateNetworkObjectGroupFromIPs(t *testing.T) {
+	var err error
+
+	ftd, err := initTest()
+	if err != nil {
+		glog.Errorf("error: %s\n", err)
+		return
+	}
+
+	ips1 := []string{
+		"1.2.3.4",
+		"5.6.7.8",
+		"9.10.11.12",
+	}
+
+	g, err := ftd.CreateNetworkObjectGroupFromIPs("testAutoCreate", ips1)
+	if err != nil {
+		t.Errorf("error: %s\n", err)
+		return
+	}
+
+	spew.Dump(g)
+
+	err = ftd.DeleteNetworkObjectGroup(g)
+	if err != nil {
+		t.Errorf("error: %s\n", err)
+	}
+
+	for i := range g.Objects {
+		err = ftd.DeleteNetworkObjectByID(g.Objects[i].ID)
+		if err != nil {
+			t.Errorf("error: %s\n", err)
+		}
+	}
+
 }

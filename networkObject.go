@@ -165,11 +165,73 @@ func (f *FTD) CreateNetworkObject(n *NetworkObject, duplicateAction int) error {
 	return nil
 }
 
+// CreateNetworkObjectsFromIPs Create Network objects from an array of IP
+func (f *FTD) CreateNetworkObjectsFromIPs(ips []string) ([]*NetworkObject, error) {
+	var err error
+	var retval []*NetworkObject
+
+	os, err := f.GetNetworkObjects()
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return nil, err
+	}
+
+	found := make(map[string]bool)
+
+	for i := range ips {
+		for o := range os {
+			if ips[i] == os[o].Value && os[o].SubType == "HOST" {
+				retval = append(retval, os[o])
+				found[ips[i]] = true
+				break
+			}
+		}
+	}
+
+	for i := range ips {
+		if _, ok := found[ips[i]]; !ok {
+
+			n := new(NetworkObject)
+			n.Name = ips[i]
+			n.Value = ips[i]
+			n.SubType = "HOST"
+
+			err = f.CreateNetworkObject(n, DuplicateActionDoNothing)
+			if err != nil {
+				if f.debug {
+					glog.Errorf("Error: %s\n", err)
+				}
+				return nil, err
+			}
+			retval = append(retval, n)
+		}
+	}
+
+	return retval, nil
+}
+
 // DeleteNetworkObject Delete a network object
 func (f *FTD) DeleteNetworkObject(n *NetworkObject) error {
 	var err error
 
 	err = f.Delete(fmt.Sprintf("%s/%s", apiNetworksEndpoint, n.ID))
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return err
+	}
+
+	return nil
+}
+
+// DeleteNetworkObjectByID Delete a network object
+func (f *FTD) DeleteNetworkObjectByID(id string) error {
+	var err error
+
+	err = f.Delete(fmt.Sprintf("%s/%s", apiNetworksEndpoint, id))
 	if err != nil {
 		if f.debug {
 			glog.Errorf("Error: %s\n", err)

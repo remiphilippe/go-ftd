@@ -236,3 +236,47 @@ func (f *FTD) DeleteFromNetworkObjectGroup(g *NetworkObjectGroup, n *NetworkObje
 
 	return nil
 }
+
+// CreateNetworkObjectGroupFromIPs Create an object group from an array of ip address. Network objects = ip.
+// Only works for new groups (not updates)
+func (f *FTD) CreateNetworkObjectGroupFromIPs(name string, ips []string) (*NetworkObjectGroup, error) {
+	var err error
+
+	query := fmt.Sprintf("name:%s", name)
+	groups, err := f.getNetworkObjectGroupBy(query)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return nil, err
+	}
+
+	if len(groups) > 0 {
+		return nil, fmt.Errorf("Duplicate Group Name")
+	}
+
+	ns, err := f.CreateNetworkObjectsFromIPs(ips)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return nil, err
+	}
+
+	g := new(NetworkObjectGroup)
+	g.Name = name
+
+	for i := range ns {
+		g.Objects = append(g.Objects, ns[i].Reference())
+	}
+
+	err = f.CreateNetworkObjectGroup(g, DuplicateActionError)
+	if err != nil {
+		if f.debug {
+			glog.Errorf("Error: %s\n", err)
+		}
+		return nil, err
+	}
+
+	return g, nil
+}

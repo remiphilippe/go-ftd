@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/golang/glog"
 )
 
@@ -32,5 +31,8 @@ func TestToken(t *testing.T) {
 		return
 	}
 
-	spew.Dump(ftd)
+	if ftd.accessToken == "" {
+		t.Errorf("no token?\n")
+	}
+	//spew.Dump(ftd)
 }

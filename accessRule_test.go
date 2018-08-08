@@ -2,8 +2,6 @@ package goftd
 
 import (
 	"testing"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 var (
@@ -113,7 +111,6 @@ func TestCreateAccessRules(t *testing.T) {
 }
 
 func TestCombinedCreateAccessRules(t *testing.T) {
-	t.Log("starting combined test...")
 	var err error
 
 	err = setupTestAccessRuleObjects(t)
@@ -136,7 +133,7 @@ func TestCombinedCreateAccessRules(t *testing.T) {
 		return
 	}
 
-	spew.Dump(a)
+	//spew.Dump(a)
 
 	err = ftd.DeleteAccessRule(a)
 	if err != nil {

@@ -3,8 +3,6 @@ package goftd
 import (
 	"fmt"
 	"testing"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 func TestGetTCPPort(t *testing.T) {
@@ -20,9 +18,7 @@ func TestGetTCPPort(t *testing.T) {
 		return
 	}
 
-	if len(ports) > 0 {
-		spew.Dump(ports)
-	} else {
+	if len(ports) == 0 {
 		t.Errorf("ports length is 0\n")
 	}
 }
